@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Элементы решения/">
+    <File Path=".gitignore" />
+  </Folder>
+  <Project Path="LabMatrixApp.vcxproj" Id="e4ff91ff-5b08-47f3-888d-07463ba38f4f" />
+</Solution>

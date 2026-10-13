@@ -1,5 +1,6 @@
 #pragma once
 #include "TVector.h"
+#include <iostream>
 
 template <typename T>
 class TTriangleMatrix : public TVector<TVector<T>> {
@@ -44,3 +45,21 @@ public:
         return res;
     }
 };
+
+template <typename T>
+std::ostream& operator<<(std::ostream& out, const TTriangleMatrix<T>& matrix) {
+    size_t n = matrix.size();
+    for (size_t i = 0; i < n; ++i) {
+        out << "[ ";
+        for (size_t j = 0; j < n; ++j) {
+            if (j >= i && (j - i) < matrix[i].size()) {
+                out << matrix[i][j - i] << " ";
+            }
+            else {
+                out << T() << " ";
+            }
+        }
+        out << "]" << std::endl;
+    }
+    return out;
+}

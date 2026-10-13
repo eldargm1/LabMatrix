@@ -8,7 +8,6 @@ protected:
     T* pMem;
     size_t sz;
     size_t cap;
-
 public:
     TVector(size_t size = 0) : sz(size), cap(size) {
         if (sz == 0) {
