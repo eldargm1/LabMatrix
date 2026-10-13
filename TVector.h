@@ -5,133 +5,137 @@
 template <typename T>
 class TVector {
 protected:
-    T* pMem;
     size_t sz;
     size_t cap;
+    T* pMem;
+
 public:
     TVector(size_t size = 0) : sz(size), cap(size) {
-        if (sz == 0) {
-            pMem = nullptr;
+        if (sz > 0) {
+            pMem = new T[cap]();
         }
         else {
-            pMem = new T[cap]();
+            pMem = nullptr;
         }
     }
 
     TVector(const TVector& v) : sz(v.sz), cap(v.cap) {
-        if (cap == 0) {
-            pMem = nullptr;
-        }
-        else {
+        if (sz > 0) {
             pMem = new T[cap];
             for (size_t i = 0; i < sz; ++i) {
                 pMem[i] = v.pMem[i];
             }
         }
-    }
-
-    TVector(TVector&& v) noexcept : pMem(v.pMem), sz(v.sz), cap(v.cap) {
-        v.pMem = nullptr;
-        v.sz = 0;
-        v.cap = 0;
+        else {
+            pMem = nullptr;
+        }
     }
 
     virtual ~TVector() {
         delete[] pMem;
     }
 
+    size_t size() const { return sz; }
+    size_t capacity() const { return cap; }
+
+    T& operator[](size_t pos) {
+        if (pos >= sz) throw std::out_of_range("Index out of range");
+        return pMem[pos];
+    }
+
+    const T& operator[](size_t pos) const {
+        if (pos >= sz) throw std::out_of_range("Index out of range");
+        return pMem[pos];
+    }
+
     TVector& operator=(const TVector& v) {
-        if (this != &v) {
-            if (cap < v.sz) {
-                delete[] pMem;
-                cap = v.sz;
-                pMem = new T[cap];
-            }
-            sz = v.sz;
+        if (this == &v) return *this;
+        delete[] pMem;
+        sz = v.sz;
+        cap = v.cap;
+        if (sz > 0) {
+            pMem = new T[cap];
             for (size_t i = 0; i < sz; ++i) {
                 pMem[i] = v.pMem[i];
             }
         }
-        return *this;
-    }
-
-    TVector& operator=(TVector&& v) noexcept {
-        if (this != &v) {
-            delete[] pMem;
-            pMem = v.pMem;
-            sz = v.sz;
-            cap = v.cap;
-            v.pMem = nullptr;
-            v.sz = 0;
-            v.cap = 0;
+        else {
+            pMem = nullptr;
         }
         return *this;
     }
 
-    size_t size() const noexcept { return sz; }
-    size_t capacity() const noexcept { return cap; }
-
-    T& operator[](size_t index) { return pMem[index]; }
-    const T& operator[](size_t index) const { return pMem[index]; }
-
-    T& at(size_t index) {
-        if (index >= sz) throw std::out_of_range("Index out of range");
-        return pMem[index];
-    }
-    const T& at(size_t index) const {
-        if (index >= sz) throw std::out_of_range("Index out of range");
-        return pMem[index];
-    }
-
-    void shrink_to_fit() {
-        if (cap > sz) {
-            if (sz == 0) {
-                delete[] pMem;
-                pMem = nullptr;
-                cap = 0;
-            }
-            else {
-                T* newMem = new T[sz];
-                for (size_t i = 0; i < sz; ++i) {
-                    newMem[i] = pMem[i];
-                }
-                delete[] pMem;
-                pMem = newMem;
-                cap = sz;
-            }
-        }
-    }
-
+    template <typename Type>
     class Iterator {
     private:
-        T* ptr;
+        Type* ptr;
     public:
-        using iterator_category = std::random_access_iterator_tag;
-        using value_type = T;
-        using difference_type = std::ptrdiff_t;
-        using pointer = T*;
-        using reference = T&;
+        Iterator(Type* p = nullptr) : ptr(p) {}
+        Iterator(const Iterator& it) : ptr(it.ptr) {}
 
-        Iterator(T* p = nullptr) : ptr(p) {}
+        Iterator& operator=(Type* p) {
+            ptr = p;
+            return *this;
+        }
 
-        T& operator*() const { return *ptr; }
-        T* operator->() { return ptr; }
+        Iterator& operator=(const Iterator& it) {
+            ptr = it.ptr;
+            return *this;
+        }
 
-        Iterator& operator++() { ++ptr; return *this; }
-        Iterator operator++(int) { Iterator tmp = *this; ++ptr; return tmp; }
+        bool operator==(const Iterator& it) const { return ptr == it.ptr; }
+        bool operator!=(const Iterator& it) const { return ptr != it.ptr; }
 
-        Iterator& operator--() { --ptr; return *this; }
-        Iterator operator--(int) { Iterator tmp = *this; --ptr; return tmp; }
+        Iterator& operator++() {
+            ptr++;
+            return *this;
+        }
 
-        Iterator operator+(difference_type n) const { return Iterator(ptr + n); }
-        Iterator operator-(difference_type n) const { return Iterator(ptr - n); }
+        Iterator operator++(int) {
+            Iterator tmp(*this);
+            ptr++;
+            return tmp;
+        }
 
-        difference_type operator-(const Iterator& other) const { return ptr - other.ptr; }
+        Iterator& operator--() {
+            ptr--;
+            return *this;
+        }
 
-        bool operator==(const Iterator& other) const { return ptr == other.ptr; }
-        bool operator!=(const Iterator& other) const { return ptr != other.ptr; }
+        Iterator operator--(int) {
+            Iterator tmp(*this);
+            ptr--;
+            return tmp;
+        }
+
+        Iterator operator+(ptrdiff_t n) const { return Iterator(ptr + n); }
+        Iterator operator-(ptrdiff_t n) const { return Iterator(ptr - n); }
+
+        ptrdiff_t operator-(const Iterator& it) const { return ptr - it.ptr; }
+
+        Iterator& operator+=(ptrdiff_t n) {
+            ptr += n;
+            return *this;
+        }
+
+        Iterator& operator-=(ptrdiff_t n) {
+            ptr -= n;
+            return *this;
+        }
+
+        Type& operator*() const { return *ptr; }
+        Type* operator->() const { return ptr; }
     };
 
-    Iterator begin() noexcept { return Iterator(pMem); }
-    Iterator end() noexcept { return Iterator(pMem + sz); }
+    typedef Iterator<T> iterator;
+    typedef Iterator<const T> const_iterator;
+
+    iterator begin() { return iterator(pMem); }
+    iterator end() { return iterator(pMem + sz); }
+
+    const_iterator begin() const { return const_iterator(pMem); }
+    const_iterator end() const { return const_iterator(pMem + sz); }
+
+    const_iterator cbegin() const { return const_iterator(pMem); }
+    const_iterator cend() const { return const_iterator(pMem + sz); }
 };
